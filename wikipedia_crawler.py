@@ -23,25 +23,41 @@ def save_image(directory, img_url):
     res = requests.get(img_url) #returns a response object of a HTTP request
     #dir is where we'll save the img: ${dir}/img_name, from img_url -> HTTP obj -> img_name extract
     #TODO: TRY TO USE urllib to short the process
+    max_len_name = 100
     if res.status_code == 200:
         img_name = img_url.rsplit('/',1)[-1]
-        file_path = os.path.join(directory, img_name)
-        with open(file_path, 'wb') as img_file:
-            img_file.write(res.content)
+        if len(img_name) < max_len_name:
+            file_path = os.path.join(directory, img_name)
+            with open(file_path, 'wb') as img_file:
+                img_file.write(res.content)
+        #for cases where the name is very long
+        else:
+            img_name = img_url.rsplit('/', 2)[1]
+            shorter_img_name = img_name.rsplit('%')[0]
+            file_path = os.path.join(directory, shorter_img_name)
+            with open(file_path, 'wb') as img_file:
+                img_file.write(res.content)
 
 
 def get_images_from_url(soup_obj, url):
     max_num_images = 20
+    min_width = 45
+    min_height = 45
+
     all_images = soup_obj.find_all('img', class_='mw-file-element')
+    # print(all_images)
     content_images = []
     for img in all_images:
-        src = img.get('src')
-        if src.startswith('//'):
-            src = 'https:' + src
-        elif src.startswith('/'):
+        img_height = int(img.get('width'))
+        img_width = int(img.get('height'))
+        if img_height > min_height and img_width > min_width:
+            src = img.get('src')
+            if src.startswith('//'):
+                src = 'https:' + src
+            elif src.startswith('/'):
             # from the url page and the src, create a full path
-            src = urllib.parse.urljoin(url, src)
-        content_images.append(src)
+                src = urllib.parse.urljoin(url, src)
+            content_images.append(src)
 
     return random.sample(content_images, min((len(content_images), max_num_images)))
 
