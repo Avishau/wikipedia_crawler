@@ -1,5 +1,6 @@
 import random
 import urllib.parse
+import urllib.request
 import os
 from bs4 import BeautifulSoup as bs
 import requests
@@ -20,24 +21,39 @@ def get_links(soup_obj, url, width, visited):
 
 
 def save_image(directory, img_url):
-    res = requests.get(img_url) #returns a response object of a HTTP request
-    #dir is where we'll save the img: ${dir}/img_name, from img_url -> HTTP obj -> img_name extract
-    #TODO: TRY TO USE urllib to short the process
+    # res = requests.get(img_url) #returns a response object of a HTTP request
+    # #dir is where we'll save the img: ${dir}/img_name, from img_url -> HTTP obj -> img_name extract
+    # #TODO: TRY TO USE urllib to short the process
     max_len_name = 100
-    if res.status_code == 200:
-        img_name = img_url.rsplit('/',1)[-1]
-        if len(img_name) < max_len_name:
-            file_path = os.path.join(directory, img_name)
-            with open(file_path, 'wb') as img_file:
-                img_file.write(res.content)
-        #for cases where the name is very long
-        else:
-            img_name = img_url.rsplit('/', 2)[1]
-            shorter_img_name = img_name.rsplit('%')[0]
-            file_path = os.path.join(directory, shorter_img_name)
-            with open(file_path, 'wb') as img_file:
-                img_file.write(res.content)
+    # if res.status_code == 200:
+    #     img_name = img_url.rsplit('/',1)[-1]
+    #     if len(img_name) < max_len_name:
+    #         file_path = os.path.join(directory, img_name)
+    #         with open(file_path, 'wb') as img_file:
+    #             img_file.write(res.content)
+    #     #for cases where the name is very long
+    #     else:
+    #         img_name = img_url.rsplit('/', 2)[1]
+    #         shorter_img_name = img_name.rsplit('%')[0]
+    #         file_path = os.path.join(directory, shorter_img_name)
+    #         with open(file_path, 'wb') as img_file:
+    #             img_file.write(res.content)
 
+    #TODO: with urllib:
+    img_name = img_url.rsplit('/', 1)[-1]
+    if len(img_name) < max_len_name:
+        file_path = os.path.join(directory, img_name)
+        urllib.request.urlretrieve(img_url, file_path)
+    else:
+        shorter_img_name = img_name.rsplit('%')[0]
+        while True:
+            if len(shorter_img_name) < max_len_name:
+                break
+            else:
+                shorter_img_name = shorter_img_name[:len(shorter_img_name)//2]
+        img_name = shorter_img_name
+        file_path = os.path.join(directory, img_name)
+        urllib.request.urlretrieve(img_url, file_path)
 
 def get_images_from_url(soup_obj, url):
     max_num_images = 20
